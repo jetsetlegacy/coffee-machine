@@ -24,6 +24,21 @@ import static org.springframework.test.util.AssertionErrors.assertTrue;
 class CoffeeMachineTest {
 
     @Test
+    void beverageNotFound() throws IOException, AllSlotsOccupiedException {
+
+        Config config = getDefaultConfig();
+        CoffeeMachine coffeeMachine = new CoffeeMachine(config);
+        Exception exception = null;
+        try {
+            coffeeMachine.getBeverage("cold_coffee");
+        } catch (PreparationException ex) {
+            exception = ex;
+        }
+        assertNotNull("exception thrown", exception);
+        assertEquals("black_tea", exception.getMessage(), "cold_coffee cannot be prepared because beverage not found");
+    }
+
+    @Test
     void allBeveragesPrepared() throws IOException, PreparationException, AllSlotsOccupiedException {
 
         Config config = getDefaultConfig();
@@ -134,14 +149,14 @@ class CoffeeMachineTest {
                     )
             );
         }
-        assertEquals("all slots used", coffeeMachine.getParallelRequests().get(), coffeeMachine.getNumOutlets());
+        assertEquals("all slots used", coffeeMachine.getUsedOutlets().get(), coffeeMachine.getNumOutlets());
         Set<String> messages = new HashSet<>();
         for (Future<String> f : futures) {
             messages.add(f.get());
         }
         assertTrue("all slots occupied error", messages.contains("hot_tea cannot be prepared because all slots are occupied"));
         assertTrue("hot_tea prepared", messages.contains("hot_tea is prepared"));
-        assertEquals("all slots free", coffeeMachine.getParallelRequests().get(), 0);
+        assertEquals("all slots free", coffeeMachine.getUsedOutlets().get(), 0);
 
     }
 

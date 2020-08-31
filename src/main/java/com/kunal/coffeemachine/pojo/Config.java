@@ -7,6 +7,9 @@ import lombok.NoArgsConstructor;
 
 import java.util.Map;
 
+/**
+ * Class Containing Config Information to initialize a coffee machine.
+ */
 @Data
 @NoArgsConstructor
 @JsonInclude(JsonInclude.Include.NON_NULL)

@@ -5,6 +5,9 @@ import lombok.Getter;
 
 import java.util.concurrent.atomic.AtomicInteger;
 
+/**
+ * Class Containing information about the Ingredient like name, available stock etc.
+ */
 @Getter
 class Ingredient {
     String name;
@@ -15,6 +18,13 @@ class Ingredient {
         this.stock = new AtomicInteger(stock);
     }
 
+    /**
+     * checks the available stock with the requested quantity for the ingredient
+     *
+     * @param required the required stock
+     * @return current stock value
+     * @throws InsufficientQuantityException in case of insufficient quantity
+     */
     Integer checkStock(Integer required) throws InsufficientQuantityException {
         Integer current = stock.get();
         if (required > current) {
@@ -23,6 +33,12 @@ class Ingredient {
         return current;
     }
 
+    /**
+     * checks the available stock with the requested quantity for the ingredient and reduces the stock for the ingredient
+     *
+     * @param required the required stock
+     * @throws InsufficientQuantityException in case of insufficient quantity
+     */
     void useIngredient(Integer required) throws InsufficientQuantityException {
         int current = checkStock(required);
         int newValue = current - required;

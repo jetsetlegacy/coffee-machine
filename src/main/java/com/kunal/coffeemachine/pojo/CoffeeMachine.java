@@ -15,18 +15,26 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 
+/**
+ * This class is used to initialize a coffee Machine and use all its functions
+ */
 @Slf4j
 @Getter
 class CoffeeMachine {
     Map<String, Ingredient> ingredientsMap;
     Map<String, Beverage> beveragesMap;
     Integer numOutlets;
-    AtomicInteger parallelRequests;
+    AtomicInteger usedOutlets;
 
+    /**
+     * checks the available stock with the requested quantity for the ingredient
+     *
+     * @param config initialises a coffee machine with given config
+     */
     CoffeeMachine(Config config) {
         Config.MachineConfig machineConfig = config.getMachineConfig();
         numOutlets = machineConfig.getOutletConfig().getCount();
-        parallelRequests = new AtomicInteger(0);
+        usedOutlets = new AtomicInteger(0);
 
         ingredientsMap = new HashMap<>(machineConfig.getTotalItemsConfig().size());
         for (Map.Entry<String, Integer> entry : machineConfig.getTotalItemsConfig().entrySet()) {
@@ -41,79 +49,36 @@ class CoffeeMachine {
         }
     }
 
+    /**
+     * checks if it is possible to prepare the requested beverage
+     *
+     * @param beverageName The name of the beverage requested.
+     * @return Success Message if beverage is prepared
+     * @throws PreparationException,AllSlotsOccupiedException if unable to prepare beverage
+     */
     String getBeverage(String beverageName) throws PreparationException, AllSlotsOccupiedException {
         Beverage requestedBeverage = beveragesMap.get(beverageName);
+        if (Objects.isNull(requestedBeverage)) {
+            throw new PreparationException(beverageName, "beverage not found");
+        }
         incrementParallelRequests(beverageName);
         try {
             checkIngredientsAndStock(requestedBeverage);
             prepareBeverage(requestedBeverage);
             return requestedBeverage.getName() + " is prepared";
         } catch (IngredientNotFoundException | InsufficientQuantityException e) {
-            throw new PreparationException(beverageName, e);
+            throw new PreparationException(beverageName, e.getMessage());
         } finally {
             decrementParallelRequests();
         }
     }
 
-    private void prepareBeverage(Beverage beverage) throws InsufficientQuantityException {
-        log.info("Started Preparing " + beverage.getName());
-        Map<String, Integer> requiredIngredients = beverage.getIngredientQuantityMap();
-        for (Map.Entry<String, Integer> entry : requiredIngredients.entrySet()) {
-            Ingredient ingredient = this.ingredientsMap.get(entry.getKey());
-            ingredient.useIngredient(entry.getValue());
-        }
-        try {
-            Thread.sleep(1000);
-        } catch (InterruptedException e) {
-            log.error(beverage.getName() + "error while preparing " + e.getMessage());
-        }
-        log.info("Completed Preparing " + beverage.getName());
-    }
-
-    private Integer checkParallelRequests(String beverageName) throws AllSlotsOccupiedException {
-        Integer current = parallelRequests.get();
-        if (current >= numOutlets) {
-            throw new AllSlotsOccupiedException(beverageName);
-        }
-        return current;
-    }
-
-    private void incrementParallelRequests(String beverageName) throws AllSlotsOccupiedException {
-        int current = checkParallelRequests(beverageName);
-        int newValue = current + 1;
-
-        while (!parallelRequests.compareAndSet(current, newValue)) {
-            current = checkParallelRequests(beverageName);
-            newValue = current + 1;
-        }
-    }
-
-    private void decrementParallelRequests() {
-        int current = parallelRequests.get();
-        int newValue = current - 1;
-
-        while (!parallelRequests.compareAndSet(current, newValue)) {
-            current = parallelRequests.get();
-            newValue = current - 1;
-        }
-    }
-
-    public void refillIngredient(String ingredientName, Integer quantity) {
-        if (ingredientsMap.containsKey(ingredientName)) {
-            Ingredient ingredient = ingredientsMap.get(ingredientName);
-            ingredient.updateStock(quantity);
-        } else {
-            ingredientsMap.put(ingredientName, new Ingredient(ingredientName, quantity));
-        }
-    }
-
-    public Map<String, Ingredient> getIngredientsRunningLow(Integer threshold) {
-        return ingredientsMap.entrySet()
-                .stream()
-                .filter(map -> map.getValue().getStock().get() <= threshold)
-                .collect(Collectors.toMap(map -> map.getKey(), map -> map.getValue()));
-    }
-
+    /**
+     * checks if all ingredients required for beverage are present and are sufficient
+     *
+     * @param beverage The beverage requested.
+     * @throws IngredientNotFoundException,InsufficientQuantityException if ingredient not found or insufficient
+     */
     private void checkIngredientsAndStock(Beverage beverage) throws IngredientNotFoundException, InsufficientQuantityException {
         Map<String, Integer> requiredIngredients = beverage.getIngredientQuantityMap();
         String missingIngredient = null;
@@ -137,4 +102,97 @@ class CoffeeMachine {
         }
     }
 
+    /**
+     * prepares the requested beverage
+     *
+     * @param beverage The beverage requested.
+     * @throws InsufficientQuantityException if ingredient quantity is not sufficient
+     */
+    private void prepareBeverage(Beverage beverage) throws InsufficientQuantityException {
+        log.info("Started Preparing " + beverage.getName());
+        Map<String, Integer> requiredIngredients = beverage.getIngredientQuantityMap();
+        for (Map.Entry<String, Integer> entry : requiredIngredients.entrySet()) {
+            Ingredient ingredient = this.ingredientsMap.get(entry.getKey());
+            ingredient.useIngredient(entry.getValue());
+        }
+        try {
+
+            //DEFAULT SLEEP TO SHOW BEVERAGE CREATION
+            Thread.sleep(1000);
+        } catch (InterruptedException e) {
+            log.error(beverage.getName() + "error while preparing " + e.getMessage());
+        }
+        log.info("Completed Preparing " + beverage.getName());
+    }
+
+    /**
+     * checks if all slots are used or any slot is free
+     *
+     * @param beverageName The name of the beverage requested.
+     * @return current occupied slots
+     * @throws AllSlotsOccupiedException if all slots are being used
+     */
+    private Integer checkParallelRequests(String beverageName) throws AllSlotsOccupiedException {
+        Integer current = usedOutlets.get();
+        if (current >= numOutlets) {
+            throw new AllSlotsOccupiedException(beverageName);
+        }
+        return current;
+    }
+
+    /**
+     * checks if all slots are used or any slot is free then increments a used slot
+     *
+     * @param beverageName The name of the beverage requested.
+     * @throws AllSlotsOccupiedException if all slots are being used
+     */
+    private void incrementParallelRequests(String beverageName) throws AllSlotsOccupiedException {
+        int current = checkParallelRequests(beverageName);
+        int newValue = current + 1;
+
+        while (!usedOutlets.compareAndSet(current, newValue)) {
+            current = checkParallelRequests(beverageName);
+            newValue = current + 1;
+        }
+    }
+
+    /**
+     * Decrements the current used slots of the machine
+     */
+    private void decrementParallelRequests() {
+        int current = usedOutlets.get();
+        int newValue = current - 1;
+
+        while (!usedOutlets.compareAndSet(current, newValue)) {
+            current = usedOutlets.get();
+            newValue = current - 1;
+        }
+    }
+
+    /**
+     * Refills the ingredient requested with the quantity passed
+     *
+     * @param ingredientName The name of the ingredient requested.
+     */
+    void refillIngredient(String ingredientName, Integer quantity) {
+        if (ingredientsMap.containsKey(ingredientName)) {
+            Ingredient ingredient = ingredientsMap.get(ingredientName);
+            ingredient.updateStock(quantity);
+        } else {
+            ingredientsMap.put(ingredientName, new Ingredient(ingredientName, quantity));
+        }
+    }
+
+    /**
+     * Returns all ingredients with stock less than threshold
+     *
+     * @param threshold The passed threshold
+     * @return Map ingredient map with ingredients running low
+     */
+    Map<String, Ingredient> getIngredientsRunningLow(Integer threshold) {
+        return ingredientsMap.entrySet()
+                .stream()
+                .filter(map -> map.getValue().getStock().get() <= threshold)
+                .collect(Collectors.toMap(map -> map.getKey(), map -> map.getValue()));
+    }
 }

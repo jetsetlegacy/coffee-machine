@@ -5,6 +5,9 @@ import lombok.Getter;
 
 import java.util.Map;
 
+/**
+ * Class Containing information about the beverage like name, ingredients etc.
+ */
 @Getter
 @AllArgsConstructor
 class Beverage {
