@@ -22,6 +22,9 @@ import java.util.concurrent.Future;
 @SpringBootTest
 class CoffeeMachineServiceTest {
 
+    /**
+     * Tests PreparationException is thrown in this case a new unknown beverage is called
+     */
     @Test
     void beverageNotFound() throws IOException, AllSlotsOccupiedException {
 
@@ -37,6 +40,9 @@ class CoffeeMachineServiceTest {
         AssertionErrors.assertEquals("black_tea", exception.getMessage(), "cold_coffee cannot be prepared because beverage not found");
     }
 
+    /**
+     * Tests hot_tea and hot_coffee successful preparation.
+     */
     @Test
     void allBeveragesPrepared() throws IOException, PreparationException, AllSlotsOccupiedException {
 
@@ -49,6 +55,9 @@ class CoffeeMachineServiceTest {
         AssertionErrors.assertEquals("coffee", coffeePreparedMessage, "hot_coffee is prepared");
     }
 
+    /**
+     * Tests PreparationException is thrown while preparing black_tea as hot_tea and hot_coffee successfully utilised the resources.
+     */
     @Test
     void insufficientIngredient() throws IOException, PreparationException, AllSlotsOccupiedException {
 
@@ -68,6 +77,9 @@ class CoffeeMachineServiceTest {
 
     }
 
+    /**
+     * Tests PreparationException is thrown while preparing green_tea as green_mixture is not found.
+     */
     @Test
     void ingredientNotFound() throws IOException, AllSlotsOccupiedException {
 
@@ -84,6 +96,9 @@ class CoffeeMachineServiceTest {
 
     }
 
+    /**
+     * Tests IngredientsRunningLow checks, returns all ingredients below threshold
+     */
     @Test
     void getIngredientsRunningLow() throws IOException, PreparationException, AllSlotsOccupiedException {
 
@@ -99,6 +114,9 @@ class CoffeeMachineServiceTest {
 
     }
 
+    /**
+     * Tests Refilling new Ingredient, Preparation of  green_tea using new ingredient green_mixture.
+     */
     @Test
     void refillIngredientNewIngredient() throws IOException, PreparationException, AllSlotsOccupiedException {
         Config config = getDefaultConfig();
@@ -108,6 +126,9 @@ class CoffeeMachineServiceTest {
         AssertionErrors.assertEquals("green_tea", teaPreparedMessage, "green_tea is prepared");
     }
 
+    /**
+     * Tests Refilling an old Ingredient, Preparation of hot_tea using old ingredient hot_milk which was low previously.
+     */
     @Test
     void refillIngredientOldIngredient() throws IOException, PreparationException, AllSlotsOccupiedException {
 
@@ -121,6 +142,9 @@ class CoffeeMachineServiceTest {
 
     }
 
+    /**
+     * Tests Concurrent Execution of the machine, Tests if we do run into all slots being used and eventually them getting cleared.
+     */
     @Test
     void runningConcurrentRequests() throws Exception {
         Config config = getDefaultConfig();
@@ -159,6 +183,9 @@ class CoffeeMachineServiceTest {
 
     }
 
+    /**
+     * Returns default Config of coffee Machine
+     */
     private Config getDefaultConfig() throws IOException {
         String json = "{\"machine\":{\"outlets\":{\"count_n\":3},\"total_items_quantity\":{\"hot_water\":500,\"hot_milk\":500,\"ginger_syrup\":100,\"sugar_syrup\":100,\"tea_leaves_syrup\":100},\"beverages\":{\"hot_tea\":{\"hot_water\":200,\"hot_milk\":100,\"ginger_syrup\":10,\"sugar_syrup\":10,\"tea_leaves_syrup\":30},\"hot_coffee\":{\"hot_water\":100,\"ginger_syrup\":30,\"hot_milk\":400,\"sugar_syrup\":50,\"tea_leaves_syrup\":30},\"black_tea\":{\"hot_water\":300,\"ginger_syrup\":30,\"sugar_syrup\":50,\"tea_leaves_syrup\":30},\"green_tea\":{\"hot_water\":100,\"ginger_syrup\":30,\"sugar_syrup\":50,\"green_mixture\":30}}}}";
         ObjectMapper mapper = new ObjectMapper();
