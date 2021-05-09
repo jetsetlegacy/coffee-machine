@@ -9,11 +9,11 @@ import java.util.concurrent.atomic.AtomicInteger;
  * Class Containing information about the Ingredient like name, available stock etc.
  */
 @Getter
-class Ingredient {
+public class Ingredient {
     String name;
     AtomicInteger stock;
 
-    Ingredient(String name, Integer stock) {
+    public Ingredient(String name, Integer stock) {
         this.name = name;
         this.stock = new AtomicInteger(stock);
     }
@@ -25,7 +25,7 @@ class Ingredient {
      * @return current stock value
      * @throws InsufficientQuantityException in case of insufficient quantity
      */
-    Integer checkStock(Integer required) throws InsufficientQuantityException {
+    public Integer checkStock(Integer required) throws InsufficientQuantityException {
         Integer current = stock.get();
         if (required > current) {
             throw new InsufficientQuantityException(name);
@@ -39,7 +39,7 @@ class Ingredient {
      * @param required the required stock
      * @throws InsufficientQuantityException in case of insufficient quantity
      */
-    void useIngredient(Integer required) throws InsufficientQuantityException {
+    public void useIngredient(Integer required) throws InsufficientQuantityException {
         int current = checkStock(required);
         int newValue = current - required;
 
@@ -49,7 +49,7 @@ class Ingredient {
         }
     }
 
-    void updateStock(Integer newStock) {
+    public void updateStock(Integer newStock) {
         stock.set(newStock);
     }
 }

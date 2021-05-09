@@ -10,7 +10,7 @@ import java.util.Map;
  */
 @Getter
 @AllArgsConstructor
-class Beverage {
+public class Beverage {
     String name;
     Map<String, Integer> ingredientQuantityMap;
 }

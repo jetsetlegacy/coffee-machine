@@ -1,10 +1,13 @@
-package com.kunal.coffeemachine.pojo;
+package com.kunal.coffeemachine.service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.kunal.coffeemachine.exception.AllSlotsOccupiedException;
 import com.kunal.coffeemachine.exception.PreparationException;
+import com.kunal.coffeemachine.pojo.Config;
+import com.kunal.coffeemachine.pojo.Ingredient;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.util.AssertionErrors;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -16,45 +19,41 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 
-import static org.springframework.test.util.AssertionErrors.assertEquals;
-import static org.springframework.test.util.AssertionErrors.assertNotNull;
-import static org.springframework.test.util.AssertionErrors.assertTrue;
-
 @SpringBootTest
-class CoffeeMachineTest {
+class CoffeeMachineServiceTest {
 
     @Test
     void beverageNotFound() throws IOException, AllSlotsOccupiedException {
 
         Config config = getDefaultConfig();
-        CoffeeMachine coffeeMachine = new CoffeeMachine(config);
+        CoffeeMachineService coffeeMachine = new CoffeeMachineService(config);
         Exception exception = null;
         try {
             coffeeMachine.getBeverage("cold_coffee");
         } catch (PreparationException ex) {
             exception = ex;
         }
-        assertNotNull("exception thrown", exception);
-        assertEquals("black_tea", exception.getMessage(), "cold_coffee cannot be prepared because beverage not found");
+        AssertionErrors.assertNotNull("exception thrown", exception);
+        AssertionErrors.assertEquals("black_tea", exception.getMessage(), "cold_coffee cannot be prepared because beverage not found");
     }
 
     @Test
     void allBeveragesPrepared() throws IOException, PreparationException, AllSlotsOccupiedException {
 
         Config config = getDefaultConfig();
-        CoffeeMachine coffeeMachine = new CoffeeMachine(config);
+        CoffeeMachineService coffeeMachine = new CoffeeMachineService(config);
         String teaPreparedMessage = coffeeMachine.getBeverage("hot_tea");
-        assertEquals("tea", teaPreparedMessage, "hot_tea is prepared");
+        AssertionErrors.assertEquals("tea", teaPreparedMessage, "hot_tea is prepared");
 
         String coffeePreparedMessage = coffeeMachine.getBeverage("hot_coffee");
-        assertEquals("coffee", coffeePreparedMessage, "hot_coffee is prepared");
+        AssertionErrors.assertEquals("coffee", coffeePreparedMessage, "hot_coffee is prepared");
     }
 
     @Test
     void insufficientIngredient() throws IOException, PreparationException, AllSlotsOccupiedException {
 
         Config config = getDefaultConfig();
-        CoffeeMachine coffeeMachine = new CoffeeMachine(config);
+        CoffeeMachineService coffeeMachine = new CoffeeMachineService(config);
         coffeeMachine.getBeverage("hot_tea");
         coffeeMachine.getBeverage("hot_coffee");
         Exception exception = null;
@@ -63,8 +62,8 @@ class CoffeeMachineTest {
         } catch (PreparationException ex) {
             exception = ex;
         }
-        assertNotNull("exception thrown", exception);
-        assertEquals("black_tea", exception.getMessage(), "black_tea cannot be prepared because sugar_syrup is not sufficient");
+        AssertionErrors.assertNotNull("exception thrown", exception);
+        AssertionErrors.assertEquals("black_tea", exception.getMessage(), "black_tea cannot be prepared because sugar_syrup is not sufficient");
 
 
     }
@@ -73,15 +72,15 @@ class CoffeeMachineTest {
     void ingredientNotFound() throws IOException, AllSlotsOccupiedException {
 
         Config config = getDefaultConfig();
-        CoffeeMachine coffeeMachine = new CoffeeMachine(config);
+        CoffeeMachineService coffeeMachine = new CoffeeMachineService(config);
         Exception exception = null;
         try {
             coffeeMachine.getBeverage("green_tea");
         } catch (PreparationException ex) {
             exception = ex;
         }
-        assertNotNull("exception thrown", exception);
-        assertEquals("green_tea", exception.getMessage(), "green_tea cannot be prepared because green_mixture is not available");
+        AssertionErrors.assertNotNull("exception thrown", exception);
+        AssertionErrors.assertEquals("green_tea", exception.getMessage(), "green_tea cannot be prepared because green_mixture is not available");
 
     }
 
@@ -89,43 +88,43 @@ class CoffeeMachineTest {
     void getIngredientsRunningLow() throws IOException, PreparationException, AllSlotsOccupiedException {
 
         Config config = getDefaultConfig();
-        CoffeeMachine coffeeMachine = new CoffeeMachine(config);
+        CoffeeMachineService coffeeMachine = new CoffeeMachineService(config);
         coffeeMachine.getBeverage("hot_tea");
         coffeeMachine.getBeverage("hot_coffee");
         Map<String, Ingredient> ingredientsRunningLow = coffeeMachine.getIngredientsRunningLow(50);
-        assertEquals("ingredients running low size", ingredientsRunningLow.size(), 3);
-        assertTrue("ingredients running low contains hot_milk", ingredientsRunningLow.containsKey("hot_milk"));
-        assertTrue("ingredients running low contains sugar_syrup", ingredientsRunningLow.containsKey("sugar_syrup"));
-        assertTrue("ingredients running low contains tea_leaves_syrup", ingredientsRunningLow.containsKey("tea_leaves_syrup"));
+        AssertionErrors.assertEquals("ingredients running low size", ingredientsRunningLow.size(), 3);
+        AssertionErrors.assertTrue("ingredients running low contains hot_milk", ingredientsRunningLow.containsKey("hot_milk"));
+        AssertionErrors.assertTrue("ingredients running low contains sugar_syrup", ingredientsRunningLow.containsKey("sugar_syrup"));
+        AssertionErrors.assertTrue("ingredients running low contains tea_leaves_syrup", ingredientsRunningLow.containsKey("tea_leaves_syrup"));
 
     }
 
     @Test
     void refillIngredientNewIngredient() throws IOException, PreparationException, AllSlotsOccupiedException {
         Config config = getDefaultConfig();
-        CoffeeMachine coffeeMachine = new CoffeeMachine(config);
+        CoffeeMachineService coffeeMachine = new CoffeeMachineService(config);
         coffeeMachine.refillIngredient("green_mixture", 200);
         String teaPreparedMessage = coffeeMachine.getBeverage("green_tea");
-        assertEquals("green_tea", teaPreparedMessage, "green_tea is prepared");
+        AssertionErrors.assertEquals("green_tea", teaPreparedMessage, "green_tea is prepared");
     }
 
     @Test
     void refillIngredientOldIngredient() throws IOException, PreparationException, AllSlotsOccupiedException {
 
         Config config = getDefaultConfig();
-        CoffeeMachine coffeeMachine = new CoffeeMachine(config);
+        CoffeeMachineService coffeeMachine = new CoffeeMachineService(config);
         coffeeMachine.getBeverage("hot_tea");
         coffeeMachine.getBeverage("hot_coffee");
         coffeeMachine.refillIngredient("hot_milk", 200);
         String teaPreparedMessage = coffeeMachine.getBeverage("hot_tea");
-        assertEquals("tea", teaPreparedMessage, "hot_tea is prepared");
+        AssertionErrors.assertEquals("tea", teaPreparedMessage, "hot_tea is prepared");
 
     }
 
     @Test
     void runningConcurrentRequests() throws Exception {
         Config config = getDefaultConfig();
-        CoffeeMachine coffeeMachine = new CoffeeMachine(config);
+        CoffeeMachineService coffeeMachine = new CoffeeMachineService(config);
         coffeeMachine.refillIngredient("hot_water", 1000);
         coffeeMachine.refillIngredient("hot_milk", 1000);
         coffeeMachine.refillIngredient("ginger_syrup", 1000);
@@ -149,14 +148,14 @@ class CoffeeMachineTest {
                     )
             );
         }
-        assertEquals("all slots used", coffeeMachine.getUsedOutlets().get(), coffeeMachine.getNumOutlets());
+        AssertionErrors.assertEquals("all slots used", coffeeMachine.getUsedOutlets().get(), coffeeMachine.getNumOutlets());
         Set<String> messages = new HashSet<>();
         for (Future<String> f : futures) {
             messages.add(f.get());
         }
-        assertTrue("all slots occupied error", messages.contains("hot_tea cannot be prepared because all slots are occupied"));
-        assertTrue("hot_tea prepared", messages.contains("hot_tea is prepared"));
-        assertEquals("all slots free", coffeeMachine.getUsedOutlets().get(), 0);
+        AssertionErrors.assertTrue("all slots occupied error", messages.contains("hot_tea cannot be prepared because all slots are occupied"));
+        AssertionErrors.assertTrue("hot_tea prepared", messages.contains("hot_tea is prepared"));
+        AssertionErrors.assertEquals("all slots free", coffeeMachine.getUsedOutlets().get(), 0);
 
     }
 

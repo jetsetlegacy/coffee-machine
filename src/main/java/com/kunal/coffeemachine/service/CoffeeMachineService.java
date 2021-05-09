@@ -1,9 +1,12 @@
-package com.kunal.coffeemachine.pojo;
+package com.kunal.coffeemachine.service;
 
 import com.kunal.coffeemachine.exception.AllSlotsOccupiedException;
 import com.kunal.coffeemachine.exception.IngredientNotFoundException;
 import com.kunal.coffeemachine.exception.InsufficientQuantityException;
 import com.kunal.coffeemachine.exception.PreparationException;
+import com.kunal.coffeemachine.pojo.Beverage;
+import com.kunal.coffeemachine.pojo.Config;
+import com.kunal.coffeemachine.pojo.Ingredient;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.util.StringUtils;
@@ -20,7 +23,7 @@ import java.util.stream.Collectors;
  */
 @Slf4j
 @Getter
-class CoffeeMachine {
+class CoffeeMachineService {
     Map<String, Ingredient> ingredientsMap;
     Map<String, Beverage> beveragesMap;
     Integer numOutlets;
@@ -31,7 +34,7 @@ class CoffeeMachine {
      *
      * @param config initialises a coffee machine with given config
      */
-    CoffeeMachine(Config config) {
+    CoffeeMachineService(Config config) {
         Config.MachineConfig machineConfig = config.getMachineConfig();
         numOutlets = machineConfig.getOutletConfig().getCount();
         usedOutlets = new AtomicInteger(0);
